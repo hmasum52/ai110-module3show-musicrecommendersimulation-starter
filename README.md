@@ -94,7 +94,10 @@ flowchart TD
     J --> K["🎵 Return Top-K\nRecommendations"]
 ```
 
----
+### Preview 
+Here is a preview of what the output looks like when you run the app: 
+
+![main.py output](ss.png)
 
 ## Getting Started
 
