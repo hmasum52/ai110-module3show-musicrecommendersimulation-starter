@@ -65,10 +65,13 @@ Where the system struggles or behaves unfairly.
 
 Prompts:  
 
-- Features it does not consider  
-- Genres or moods that are underrepresented  
-- Cases where the system overfits to one preference  
-- Ways the scoring might unintentionally favor some users  
+- **Features it does not consider:** The system ignores tempo, danceability, valence, and listening history, so two songs with identical genre and mood but very different sonic feel are treated as equal matches.
+
+- **Genres or moods that are underrepresented:** 13 of 15 genres have exactly one song in the catalog, meaning users who prefer jazz, classical, or folk receive far fewer competitive matches than lofi or pop users who have 2–3 songs each.
+
+- **Cases where the system overfits to one preference:** Because genre carries 0.44 of the total weight, a user with a strong genre preference will see the same 1–3 songs dominate every recommendation list regardless of how poorly they match on energy or mood.
+
+- **Ways the scoring might unintentionally favor some users:** Users whose favorite genre happens to be well-represented in the catalog (lofi, pop) get more diverse top-5 results, while niche-genre users are structurally disadvantaged — an artifact of catalog size, not preference quality.
 
 ---
 
