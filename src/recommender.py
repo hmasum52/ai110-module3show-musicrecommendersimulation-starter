@@ -117,9 +117,9 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
         reasons.append(f"acousticness {song['acousticness']:.2f}")
 
     total = (
-        genre_score    * 0.22 +
+        genre_score    * 0.44 +
         mood_score     * 0.22 +
-        energy_score   * 0.44 +
+        energy_score   * 0.22 +
         acoustic_score * 0.11
     )
 
