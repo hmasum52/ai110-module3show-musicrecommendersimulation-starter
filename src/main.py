@@ -47,10 +47,87 @@ def main() -> None:
         "related_moods":   ["melancholic", "reflective", "dramatic"],
     }
 
+    # --- Adversarial / Edge-Case Profiles ---
+
+    # EDGE 1: "Impossible Unicorn"
+    # genre + mood don't exist in the catalog at all.
+    # Expected flaw: genre (0.44) and mood (0.22) weights are completely wasted —
+    # 66% of the scoring formula contributes nothing. Rankings collapse to
+    # energy proximity + acousticness only (max possible score = 0.33).
+    impossible_user = {
+        "favorite_genre":  "reggae",          # not in catalog
+        "favorite_mood":   "sad",             # not in catalog
+        "target_energy":   0.60,
+        "likes_acoustic":  False,
+        "related_genres":  [],
+        "related_moods":   [],
+    }
+
+    # EDGE 2: "Loud Silence"
+    # Wants a peaceful mood but demands extreme energy (0.97).
+    # Velvet Cathedral is the only peaceful song — energy 0.18 — so it gets
+    # crushed by the energy penalty. Loud, non-peaceful songs bubble up instead.
+    # Expected flaw: the "right" song for mood ends up near the bottom.
+    loud_silence_user = {
+        "favorite_genre":  "classical",
+        "favorite_mood":   "peaceful",
+        "target_energy":   0.97,              # fights directly against peaceful songs
+        "likes_acoustic":  True,
+        "related_genres":  [],
+        "related_moods":   [],
+    }
+
+    # EDGE 3: "Acoustic Betrayal"
+    # Likes genres that are inherently acoustic (folk, country, blues, lofi)
+    # but explicitly dislikes acoustic sound. Genre matches reward the very
+    # songs that the acoustic penalty punishes — they fight each other.
+    # Expected flaw: no song can score well; high-energy electric songs may
+    # surface despite being a terrible genre/mood fit.
+    acoustic_betrayal_user = {
+        "favorite_genre":  "folk",
+        "favorite_mood":   "wistful",
+        "target_energy":   0.41,
+        "likes_acoustic":  False,             # penalizes folk/country/blues/lofi
+        "related_genres":  ["country", "blues", "lofi"],
+        "related_moods":   ["reflective", "melancholic", "chill"],
+    }
+
+    # EDGE 4: "Duplicate Trap"
+    # favorite_genre/mood also appear inside related_genres/related_moods.
+    # Because score_song uses elif, the related list is never checked when
+    # there's an exact match — the duplicates are silently ignored.
+    # Confirms the elif short-circuit doesn't accidentally double-count.
+    duplicate_trap_user = {
+        "favorite_genre":  "lofi",
+        "favorite_mood":   "chill",
+        "target_energy":   0.40,
+        "likes_acoustic":  True,
+        "related_genres":  ["lofi", "ambient"],   # "lofi" is a duplicate
+        "related_moods":   ["chill", "focused"],  # "chill" is a duplicate
+    }
+
+    # EDGE 5: "Reverse-Engineered Max Score"
+    # Preferences are crafted to give Velvet Cathedral (id=11) a near-perfect
+    # score (≈0.98). Tests whether the scorer can be gamed to surface one
+    # specific song and whether other songs can even compete.
+    max_score_user = {
+        "favorite_genre":  "classical",       # exact match → 0.44
+        "favorite_mood":   "peaceful",        # exact match → 0.22
+        "target_energy":   0.18,              # Velvet Cathedral's exact energy → 0.22
+        "likes_acoustic":  True,              # acousticness 0.95 → ~0.10
+        "related_genres":  [],
+        "related_moods":   [],
+    }
+
     user_profiles = [
-        ("Study / Focus",      study_user),
-        ("Workout / Hype",     workout_user),
-        ("Late-Night Drive",   latenight_user),
+        ("Study / Focus",           study_user),
+        ("Workout / Hype",          workout_user),
+        ("Late-Night Drive",        latenight_user),
+        ("[EDGE] Impossible Unicorn",       impossible_user),
+        ("[EDGE] Loud Silence",             loud_silence_user),
+        ("[EDGE] Acoustic Betrayal",        acoustic_betrayal_user),
+        ("[EDGE] Duplicate Trap",           duplicate_trap_user),
+        ("[EDGE] Reverse-Engineered Max",   max_score_user),
     ]
 
     for profile_name, user_prefs in user_profiles:
