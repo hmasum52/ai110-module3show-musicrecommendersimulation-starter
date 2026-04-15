@@ -1,5 +1,5 @@
 from typing import List, Dict, Tuple, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field, asdict
 
 @dataclass
 class Song:
@@ -28,6 +28,8 @@ class UserProfile:
     favorite_mood: str
     target_energy: float
     likes_acoustic: bool
+    related_genres: List[str] = field(default_factory=list)
+    related_moods: List[str] = field(default_factory=list)
 
 class Recommender:
     """
@@ -38,12 +40,14 @@ class Recommender:
         self.songs = songs
 
     def recommend(self, user: UserProfile, k: int = 5) -> List[Song]:
-        # TODO: Implement recommendation logic
-        return self.songs[:k]
+        scored = [(song, score_song(asdict(user), asdict(song))[0]) for song in self.songs]
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [song for song, _ in scored[:k]]
 
     def explain_recommendation(self, user: UserProfile, song: Song) -> str:
-        # TODO: Implement explanation logic
-        return "Explanation placeholder"
+        score, reasons = score_song(asdict(user), asdict(song))
+        explanation = ", ".join(reasons) if reasons else "no strong match"
+        return f"Score {score:.2f}: {explanation}"
 
 def load_songs(csv_path: str) -> List[Dict]:
     """
