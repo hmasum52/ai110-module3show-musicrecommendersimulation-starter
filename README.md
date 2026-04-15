@@ -136,144 +136,33 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Experiments You Tried
 
-Use this section to document the experiments you ran. For example:
+- **What happened when you changed the weight on genre from 0.44 to 0.22 (swapped with energy):** High-energy songs began separating in rank instead of clustering, the score cliff between #1 and #2 shrank significantly, and the "Impossible Unicorn" profile's max achievable score jumped from 0.28 to 0.47 — confirming genre dominance was the primary driver of filter-bubble behavior.
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+- **What happened when you added acousticness to the score:** It acted as a meaningful tie-breaker between otherwise equally-scored songs, but also introduced a silent penalty for acoustic songs when `likes_acoustic=False` — a penalty that never appeared in the explanation output, making it invisible to the user.
+
+- **How did your system behave for different types of users:** Users with clear, consistent preferences (e.g. Study/Focus) got tight, intuitive top-5 results with scores above 0.85, while adversarial users with contradictory or catalog-absent preferences saw max scores collapse to 0.22–0.33, exposing how much of the formula goes to waste when genre and mood can't match.
 
 ---
 
 ## Limitations and Risks
 
-Summarize some limitations of your recommender.
+- **Tiny catalog with uneven genre coverage:** The 18-song catalog has 13 genres represented by only one song each, so niche-genre users get far fewer competitive matches than lofi or pop users.
 
-Examples:
+- **Genre weight creates a filter bubble:** At 0.44 weight, genre dominates the score — users consistently see the same 1–3 songs at the top regardless of how poorly they match on energy or mood.
 
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
+- **No understanding of lyrics, language, or cultural context:** Two songs can share the same genre and mood label but sound completely different; the system has no way to distinguish them.
 
-You will go deeper on this in your model card.
+- **Binary and rigid user preferences:** Acoustic preference is a hard true/false with no gradient, and the system assumes one fixed taste profile — it cannot handle a user whose mood shifts by context or time of day.
 
 ---
 
 ## Reflection
 
-Read and complete `model_card.md`:
+Read [**Model Card**](model_card.md)
 
-[**Model Card**](model_card.md)
+- **How recommenders turn data into predictions:** A recommender doesn't truly "understand" music — it converts attributes like genre and energy into numbers, multiplies them by weights, and ranks the results. The intelligence lives entirely in those weights and how the features are defined, not in any deeper understanding of sound or taste.
 
-Write 1 to 2 paragraphs here about what you learned:
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
+- **Where bias or unfairness could show up in systems like this:** Bias enters through catalog imbalance (lofi users get more choices than jazz users), feature weighting (genre's 0.44 share locks users into a narrow slice), and silent penalties (acoustic down-ranking that never appears in the explanation) — none of which are obvious until you deliberately test edge cases.
 
 
 ---
-
-## 7. `model_card_template.md`
-
-Combines reflection and model card framing from the Module 3 guidance. :contentReference[oaicite:2]{index=2}  
-
-```markdown
-# 🎧 Model Card - Music Recommender Simulation
-
-## 1. Model Name
-
-Give your recommender a name, for example:
-
-> VibeFinder 1.0
-
----
-
-## 2. Intended Use
-
-- What is this system trying to do
-- Who is it for
-
-Example:
-
-> This model suggests 3 to 5 songs from a small catalog based on a user's preferred genre, mood, and energy level. It is for classroom exploration only, not for real users.
-
----
-
-## 3. How It Works (Short Explanation)
-
-Describe your scoring logic in plain language.
-
-- What features of each song does it consider
-- What information about the user does it use
-- How does it turn those into a number
-
-Try to avoid code in this section, treat it like an explanation to a non programmer.
-
----
-
-## 4. Data
-
-Describe your dataset.
-
-- How many songs are in `data/songs.csv`
-- Did you add or remove any songs
-- What kinds of genres or moods are represented
-- Whose taste does this data mostly reflect
-
----
-
-## 5. Strengths
-
-Where does your recommender work well
-
-You can think about:
-- Situations where the top results "felt right"
-- Particular user profiles it served well
-- Simplicity or transparency benefits
-
----
-
-## 6. Limitations and Bias
-
-Where does your recommender struggle
-
-Some prompts:
-- Does it ignore some genres or moods
-- Does it treat all users as if they have the same taste shape
-- Is it biased toward high energy or one genre by default
-- How could this be unfair if used in a real product
-
----
-
-## 7. Evaluation
-
-How did you check your system
-
-Examples:
-- You tried multiple user profiles and wrote down whether the results matched your expectations
-- You compared your simulation to what a real app like Spotify or YouTube tends to recommend
-- You wrote tests for your scoring logic
-
-You do not need a numeric metric, but if you used one, explain what it measures.
-
----
-
-## 8. Future Work
-
-If you had more time, how would you improve this recommender
-
-Examples:
-
-- Add support for multiple users and "group vibe" recommendations
-- Balance diversity of songs instead of always picking the closest match
-- Use more features, like tempo ranges or lyric themes
-
----
-
-## 9. Personal Reflection
-
-A few sentences about what you learned:
-
-- What surprised you about how your system behaved
-- How did building this change how you think about real music recommenders
-- Where do you think human judgment still matters, even if the model seems "smart"
-
