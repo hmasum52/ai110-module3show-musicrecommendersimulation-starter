@@ -17,17 +17,50 @@ Replace this paragraph with your own summary of what your version does.
 
 ## How The System Works
 
-Explain your design in plain language.
+Real-world recommenders like Spotify and YouTube combine two strategies: **collaborative filtering** (learning from what similar users enjoyed) and **content-based filtering** (matching songs by their audio and descriptive attributes). This version prioritizes content-based filtering — it does not need any data from other users and works purely from song attributes and a single user's stated preferences, making it transparent and easy to reason about.
 
-Some prompts to answer:
+**What features does each `Song` use?**
+Each song is represented by seven attributes drawn from `data/songs.csv`: two categorical features — `genre` (e.g. lofi, rock, pop) and `mood` (e.g. chill, intense, happy) — and five numerical features normalized to a 0–1 scale: `energy`, `tempo_bpm`, `valence`, `danceability`, and `acousticness`. Genre and mood carry the most weight because they define the broadest boundaries of taste; the numerical features fine-tune similarity within those boundaries.
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+**What information does the `UserProfile` store?**
+The user profile stores four fields: `favorite_genre` (a string such as "lofi"), `favorite_mood` (a string such as "chill"), `target_energy` (a float between 0 and 1 representing desired intensity), and `likes_acoustic` (a boolean — true if the user prefers acoustic-sounding songs, false otherwise). These four fields are the only inputs the recommender uses to evaluate every song in the catalog.
 
-You can include a simple diagram or bullet list if helpful.
+**How does the `Recommender` compute a score for each song?**
+Genre and mood are categorical — each scores 1.0 on an exact match and 0.0 otherwise. Energy uses a proximity formula (`score = 1 - |target_energy - song.energy|`) so songs closer to the user's preferred level score higher regardless of direction. Acousticness is evaluated as a boolean signal: if `likes_acoustic` is true, songs with high acousticness values score higher; if false, lower-acousticness songs are favored. Each feature score is multiplied by a weight (genre 0.35, mood 0.30, energy 0.25, acousticness 0.10) and summed into a single total score between 0 and 1.
+
+**How do you choose which songs to recommend?**
+Every song in the catalog is scored against the user profile using the weighted formula above. The songs are then sorted from highest to lowest total score and the top results are returned as recommendations. This separation — scoring first, ranking second — mirrors how production recommenders work: scoring evaluates each song independently, while ranking decides the order the user actually sees.
+
+```
+User Profile
+  favorite_genre=lofi, favorite_mood=chill
+  target_energy=0.40,  likes_acoustic=True
+        │
+        ▼
+┌─────────────────────────────────────┐
+│         SCORING (per song)          │
+│                                     │
+│  genre_score       × 0.35           │
+│  mood_score        × 0.30           │
+│  energy_score      × 0.25           │
+│  acousticness_score× 0.10           │
+│  ─────────────────────              │
+│  total_score  (0.0 – 1.0)           │
+└─────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────┐
+│         RANKING (all songs)         │
+│                                     │
+│  #1  Focus Flow        0.91         │
+│  #2  Library Rain      0.88         │
+│  #3  Midnight Coding   0.85         │
+│  ...                                │
+└─────────────────────────────────────┘
+        │
+        ▼
+  Top-N Recommendations returned
+```
 
 ---
 
