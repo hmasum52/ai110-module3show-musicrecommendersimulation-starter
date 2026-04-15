@@ -23,40 +23,47 @@ Real-world recommenders like Spotify and YouTube combine two strategies: **colla
 Each song is represented by seven attributes drawn from `data/songs.csv`: two categorical features — `genre` (e.g. lofi, rock, pop) and `mood` (e.g. chill, intense, happy) — and five numerical features normalized to a 0–1 scale: `energy`, `tempo_bpm`, `valence`, `danceability`, and `acousticness`. Genre and mood carry the most weight because they define the broadest boundaries of taste; the numerical features fine-tune similarity within those boundaries.
 
 **What information does the `UserProfile` store?**
-The user profile stores four fields: `favorite_genre` (a string such as "lofi"), `favorite_mood` (a string such as "chill"), `target_energy` (a float between 0 and 1 representing desired intensity), and `likes_acoustic` (a boolean — true if the user prefers acoustic-sounding songs, false otherwise). These four fields are the only inputs the recommender uses to evaluate every song in the catalog.
+The user profile stores four core fields: `favorite_genre` (e.g. "lofi"), `favorite_mood` (e.g. "chill"), `target_energy` (a float between 0 and 1), and `likes_acoustic` (a boolean). To avoid penalizing closely related genres and moods, the profile also supports two optional lists — `related_genres` (e.g. `["ambient"]`) and `related_moods` (e.g. `["focused", "relaxed"]`) — that earn partial credit instead of scoring zero on a mismatch.
 
 **How does the `Recommender` compute a score for each song?**
-Genre and mood are categorical — each scores 1.0 on an exact match and 0.0 otherwise. Energy uses a proximity formula (`score = 1 - |target_energy - song.energy|`) so songs closer to the user's preferred level score higher regardless of direction. Acousticness is evaluated as a boolean signal: if `likes_acoustic` is true, songs with high acousticness values score higher; if false, lower-acousticness songs are favored. Each feature score is multiplied by a weight (genre 0.35, mood 0.30, energy 0.25, acousticness 0.10) and summed into a single total score between 0 and 1.
+Genre and mood use a three-tier match: **1.0** for an exact match, **0.5** if the song's value appears in the related list, and **0.0** otherwise. This prevents aurally similar songs (e.g. ambient/lofi or focused/chill) from being unfairly discarded while still keeping hard mismatches like "intense rock" near zero. Energy uses a proximity formula (`score = 1 - |target_energy - song.energy|`) so songs closer to the user's preferred level score higher. Acousticness is a boolean signal: `likes_acoustic=True` favors high-acousticness songs, `False` favors low. Each score is multiplied by a weight (genre 0.35, mood 0.30, energy 0.25, acousticness 0.10) and summed into a total between 0 and 1.
 
 **How do you choose which songs to recommend?**
 Every song in the catalog is scored against the user profile using the weighted formula above. The songs are then sorted from highest to lowest total score and the top results are returned as recommendations. This separation — scoring first, ranking second — mirrors how production recommenders work: scoring evaluates each song independently, while ranking decides the order the user actually sees.
 
 ```
 User Profile
-  favorite_genre=lofi, favorite_mood=chill
-  target_energy=0.40,  likes_acoustic=True
+  favorite_genre=lofi,  related_genres=["ambient"]
+  favorite_mood=chill,  related_moods=["focused", "relaxed"]
+  target_energy=0.40,   likes_acoustic=True
         │
         ▼
-┌─────────────────────────────────────┐
-│         SCORING (per song)          │
-│                                     │
-│  genre_score       × 0.35           │
-│  mood_score        × 0.30           │
-│  energy_score      × 0.25           │
-│  acousticness_score× 0.10           │
-│  ─────────────────────              │
-│  total_score  (0.0 – 1.0)           │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│            SCORING (per song)                │
+│                                              │
+│  genre_score  1.0 exact / 0.5 related / 0.0 │
+│  mood_score   1.0 exact / 0.5 related / 0.0 │
+│  energy_score = 1 - |target - song.energy|   │
+│  acousticness = song value if likes_acoustic │
+│                                              │
+│  total = genre×0.35 + mood×0.30             │
+│        + energy×0.25 + acoustic×0.10        │
+│                           (0.0 – 1.0)        │
+└──────────────────────────────────────────────┘
         │
+        ├─── "Storm Runner" (rock/intense) → 0.13 ❌
+        ├─── "Spacewalk"    (ambient/chill) → 0.72 ✅ partial genre credit
+        ├─── "Focus Flow"   (lofi/focused)  → 0.83 ✅ partial mood credit
+        └─── "Library Rain" (lofi/chill)    → 0.95 ✅ exact match
         ▼
-┌─────────────────────────────────────┐
-│         RANKING (all songs)         │
-│                                     │
-│  #1  Focus Flow        0.91         │
-│  #2  Library Rain      0.88         │
-│  #3  Midnight Coding   0.85         │
-│  ...                                │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│              RANKING (all songs)             │
+│                                              │
+│  #1  Library Rain      0.95                  │
+│  #2  Focus Flow        0.83                  │
+│  #3  Spacewalk         0.72                  │
+│  ...                                         │
+└──────────────────────────────────────────────┘
         │
         ▼
   Top-N Recommendations returned
