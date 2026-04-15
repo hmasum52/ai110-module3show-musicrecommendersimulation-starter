@@ -109,6 +109,8 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     # --- Acousticness score (weight 0.11) ---
     likes_acoustic: bool = user_prefs.get("likes_acoustic", True)
     acoustic_score = song["acousticness"] if likes_acoustic else 1.0 - song["acousticness"]
+    if likes_acoustic:
+        reasons.append(f"acousticness {song['acousticness']:.2f}")
 
     total = (
         genre_score    * 0.44 +
