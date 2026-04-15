@@ -67,6 +67,33 @@ User Profile
   Top-N Recommendations returned
 ```
 
+### Data Flow Overview
+
+```mermaid
+flowchart TD
+    A["🧑 UserProfile\nfavorite_genre · favorite_mood\ntarget_energy · likes_acoustic\nrelated_genres · related_moods"]
+    B["📂 Load songs.csv\n(full catalog)"]
+    A --> C
+    B --> C
+
+    C["🔁 For each Song in catalog"]
+
+    C --> D["genre_score × 0.44\n1.0 exact / 0.5 related / 0.0 miss"]
+    C --> E["mood_score × 0.22\n1.0 exact / 0.5 related / 0.0 miss"]
+    C --> F["energy_score × 0.22\n1 − |target_energy − song.energy|"]
+    C --> G["acoustic_score × 0.11\nacousticness or 1 − acousticness"]
+
+    D --> H["total = weighted sum  (0.0 – 1.0)"]
+    E --> H
+    F --> H
+    G --> H
+
+    H --> I{"More songs?"}
+    I -- Yes --> C
+    I -- No --> J["📊 Sort all scored songs\nhighest → lowest"]
+    J --> K["🎵 Return Top-K\nRecommendations"]
+```
+
 ---
 
 ## Getting Started
