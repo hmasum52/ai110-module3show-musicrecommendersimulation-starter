@@ -61,10 +61,6 @@ Prompts:
 
 ## 6. Limitations and Bias 
 
-Where the system struggles or behaves unfairly. 
-
-Prompts:  
-
 - **Features it does not consider:** The system ignores tempo, danceability, valence, and listening history, so two songs with identical genre and mood but very different sonic feel are treated as equal matches.
 
 - **Genres or moods that are underrepresented:** 13 of 15 genres have exactly one song in the catalog, meaning users who prefer jazz, classical, or folk receive far fewer competitive matches than lofi or pop users who have 2–3 songs each.
@@ -77,14 +73,13 @@ Prompts:
 
 ## 7. Evaluation  
 
-How you checked whether the recommender behaved as expected. 
+- **Which user profiles you tested:** Three realistic profiles (Study/Focus, Workout/Hype, Late-Night Drive) and five adversarial profiles designed to expose edge cases, including a user whose favorite genre doesn't exist in the catalog and one with directly contradictory mood and energy preferences.
 
-Prompts:  
+- **What you looked for in the recommendations:** Whether the top-ranked songs matched the user's stated genre and mood, and whether the score gap between #1 and #2 was meaningful or artificially inflated.
 
-- Which user profiles you tested  
-- What you looked for in the recommendations  
-- What surprised you  
-- Any simple tests or comparisons you ran  
+- **What surprised you:** The "Loud Silence" profile (peaceful mood, energy 0.97) still returned Velvet Cathedral at #1 — the combined genre+mood weight (0.66) was large enough to overcome a near-worst energy score of 0.21.
+
+- **Any simple tests or comparisons you ran:** A weight-swap experiment (genre ↔ energy weights) confirmed that high-energy songs began separating in rank and the score cliff between #1 and #2 shrank noticeably, validating that genre dominance is the primary driver of filter-bubble behavior.
 
 No need for numeric metrics unless you created some.
 
